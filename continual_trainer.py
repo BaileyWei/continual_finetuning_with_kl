@@ -327,7 +327,7 @@ class ContinualTrainer(DPOTrainer):
         ref_logprob = self.logprobs_from_logits(ref_logits[:, :-1, :], input_ids[:, 1:])
         kl_loss = self.beta * self._kl_penalty(logprob, ref_logprob)
 
-        if self.kl_penalty:
+        if not self.kl_penalty:
             return loss, kl_loss, logprob.sum(-1), ref_logprob.sum(-1)
         else:
             return loss+kl_loss, kl_loss, logprob.sum(-1), ref_logprob.sum(-1)
@@ -356,15 +356,18 @@ class ContinualTrainer(DPOTrainer):
         """Compute the DPO loss and other metrics for the given batch of inputs for train or test."""
         metrics = {}
 
+
         answer_logits = self.model(
                                    input_ids=batch['input_ids'],
                                    attention_mask=batch['attention_mask'],
-                                   position_ids=batch['position_ids']).logits.to(torch.float32)
+                                   position_ids=batch['position_ids'],
+                                   return_dict=True).logits.to(torch.float32)
         with torch.no_grad():
             ref_logits = self.ref_model(
                                         input_ids=batch['input_ids'],
                                         attention_mask=batch['attention_mask'],
-                                        position_ids=batch['position_ids']).logits.to(torch.float32)
+                                        position_ids=batch['position_ids'],
+                                        return_dict=True).logits.to(torch.float32)
 
         losses, kl_penalty, logprob, ref_logprob = self.loss(answer_logits, ref_logits, batch['input_ids'], batch['labels'])
 

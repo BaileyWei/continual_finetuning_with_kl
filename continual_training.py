@@ -54,12 +54,11 @@ class ScriptArguments:
         metadata={"help": "Model type selected in the list: " + ", ".join(MODEL_CLASSES.keys())}
     )
     model_name_or_path: Optional[str] = field(
-        default='/home/wangyuxuan/projects/models/chatglm-6b',
+        default='THUDM/chatglm-6b',
         metadata={"help": "The model checkpoint for weights initialization."}
-        # /home/wangyuxuan/projects/models/chatglm-6b
     )
     tokenizer_name_or_path: Optional[str] = field(
-        default=None, metadata={"help": "The tokenizer for weights initialization."}
+        default='THUDM/chatglm-6b', metadata={"help": "The tokenizer for weights initialization."}
     )
     load_in_8bit: bool = field(default=False, metadata={"help": "Whether to load the model in 8bit mode or not."})
     load_in_4bit: bool = field(default=False, metadata={"help": "Whether to load the model in 4bit mode or not."})
