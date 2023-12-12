@@ -146,7 +146,7 @@ class ScriptArguments:
     peft_path: Optional[str] = field(default=None)
     do_train: bool = field(default=True, metadata={"help": "Whether to run training."})
     do_eval: bool = field(default=True, metadata={"help": "Whether to run eval on the validation set."})
-    beta: Optional[float] = field(default=0.1, metadata={"help": "The beta parameter for DPO loss"})
+    beta: Optional[float] = field(default=0.1, metadata={"help": "The beta parameter for KL loss"})
     kl_penalty: bool = field(default=True, metadata={"help": "Whether to add KL penalty in training stage"})
     learning_rate: Optional[float] = field(default=2e-5, metadata={"help": "Learning rate"})
     lr_scheduler_type: Optional[str] = field(default="cosine", metadata={"help": "The lr scheduler type"})
