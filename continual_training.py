@@ -5,8 +5,8 @@ reference:
 @author:XuMing(xuming624@qq.com)
 """
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = '8'
-os.environ["NCCL_P2P_DISABLE"]= "1"
+# os.environ["CUDA_VISIBLE_DEVICES"] = '8'
+# os.environ["NCCL_P2P_DISABLE"]= "1"
 import argparse
 from copy import deepcopy
 from dataclasses import dataclass, field
@@ -31,6 +31,7 @@ from transformers import (
     BitsAndBytesConfig,
 )
 from transformers.deepspeed import is_deepspeed_zero3_enabled
+from transformers.trainer_utils import get_last_checkpoint
 from trl import DPOTrainer
 from continual_trainer import ContinualTrainer
 
@@ -56,6 +57,10 @@ class ScriptArguments:
     model_name_or_path: Optional[str] = field(
         default='THUDM/chatglm-6b',
         metadata={"help": "The model checkpoint for weights initialization."}
+    )
+    ref_model_name_or_path: Optional[str] = field(
+        default=None,
+        metadata={"help": "The reference model checkpoint for weights initialization."}
     )
     tokenizer_name_or_path: Optional[str] = field(
         default='THUDM/chatglm-6b', metadata={"help": "The tokenizer for weights initialization."}
@@ -173,7 +178,7 @@ class ScriptArguments:
         metadata={"help": "Remove unused columns from the dataset if `datasets.Dataset` is used"}
     )
     report_to: Optional[str] = field(default="tensorboard", metadata={"help": "Report to wandb or tensorboard"})
-
+    resume_from_checkpoint: Optional[bool] = field(default=False, metadata={"help": "loading lora checkpoint"})
     def __post_init__(self):
         if self.model_type is None:
             raise ValueError("You must specify a valid model_type to run training.")
@@ -407,7 +412,7 @@ def main():
         ) if args.qlora else None,
     )
     ref_model = model_class.from_pretrained(
-        args.model_name_or_path,
+        args.ref_model_name_or_path if args.ref_model_name_or_path else args.model_name_or_path,
         config=config,
         torch_dtype=torch_dtype,
         # load_in_4bit=args.load_in_4bit,
@@ -470,7 +475,7 @@ def main():
         run_name=f"continual_training_{args.model_type}",
     )
 
-    # Initialize contiual trainer
+    # Initialize continual trainer
     peft_config = None
     if args.use_peft:
         logger.info("Fine-tuning method: LoRA(PEFT)")
@@ -506,7 +511,9 @@ def main():
     # Training
     if args.do_train:
         logger.info("*** Train ***")
-        train_result = trainer.train()
+        if args.resume_from_checkpoint:
+            logger.info(f"*** Loading checkpoints from {get_last_checkpoint(args.output_dir)} ***")
+        train_result = trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
         metrics = train_result.metrics
         metrics["train_samples"] = max_train_samples
         trainer.log_metrics("train", metrics)
