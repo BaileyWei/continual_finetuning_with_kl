@@ -256,6 +256,7 @@ class ContinualTrainer(DPOTrainer):
             callbacks=callbacks,
             optimizers=optimizers,
             preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+            beta=beta
         )
 
         if not hasattr(self, "accelerator"):
